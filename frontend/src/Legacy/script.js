@@ -64,7 +64,7 @@ const GOVERNORS = [
     { name:"Poreddy Ashish Reddy", role:"The Showrunner", quote:"Yattitude izz altitude", funFact:"Can sleep with eyes open during lectures.", img:"Me .jpeg" },
     { name:"Vikas Arjun Pragada", role:"The Director", quote:"Cheppu bhai em cheddam bhaiiiii......", funFact:"Practices dialogues in the shower loudly.", img:"Bikash.jpeg" },
     { name:"Nistalavalli Sathvika", role:"The Playwright", quote:"Arey thappuraa...", funFact:"Eats more but not in mess", img:"Volli.jpeg" },
-    { name:"Manish Rasamalla", role:"The Stage Master", quote:"Ni bondha ra Ni bondha....", funFact:"Goes library only fr Renu shree", img:"Monish .jpeg" }
+    { name:"Manish Rasamalla", role:"The Stage Master", quote:"Ni bondha ra Ni bondha....", funFact:"Farms aura in free time", img:"Monish .jpeg" }
 ];
 
 // Data for Timeline
