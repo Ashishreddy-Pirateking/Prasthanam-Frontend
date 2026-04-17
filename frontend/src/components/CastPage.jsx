@@ -191,6 +191,7 @@ export default function CastPage() {
   const [activeBatchId, setActiveBatchId] = useState(() => castBatches[0].id);
   const [slideIndex, setSlideIndex] = useState(0);
   const [showBatchGallery, setShowBatchGallery] = useState(false);
+  const [selectedBatchPhoto, setSelectedBatchPhoto] = useState(null);
   const safeActiveBatchId = castBatches.some((batch) => batch.id === activeBatchId)
     ? activeBatchId
     : castBatches[0].id;
@@ -210,6 +211,12 @@ export default function CastPage() {
     () => toUniqueStrings(activeBatch.governorNames),
     [activeBatch]
   );
+
+  useEffect(() => {
+    if (!showBatchGallery && selectedBatchPhoto) {
+      setSelectedBatchPhoto(null);
+    }
+  }, [selectedBatchPhoto, showBatchGallery]);
 
   useEffect(() => {
     if (activePhotos.length <= 1) return;
@@ -361,11 +368,47 @@ export default function CastPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-auto pr-1">
               {activePhotos.map((src, idx) => (
-                <div key={`${activeBatch.id}-photo-${idx}`} className="rounded-xl overflow-hidden border border-white/10 bg-black/40">
-                  <img src={src} alt={`${activeBatch.label} ${idx + 1}`} className="w-full h-[220px] object-cover" />
-                </div>
+                <button
+                  key={`${activeBatch.id}-photo-${idx}`}
+                  type="button"
+                  onClick={() => setSelectedBatchPhoto(src)}
+                  className="group rounded-xl overflow-hidden border border-white/10 bg-black/40 text-left transition-all duration-300 hover:border-[#FFD700]/50 hover:shadow-[0_0_20px_rgba(255,215,0,0.12)] focus:outline-none focus:ring-2 focus:ring-[#FFD700]/70"
+                >
+                  <div className="relative">
+                    <img
+                      src={src}
+                      alt={`${activeBatch.label} ${idx + 1}`}
+                      className="w-full h-[220px] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+                </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showBatchGallery && selectedBatchPhoto && (
+        <div
+          className="fixed inset-0 z-[10000000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 md:p-8"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setSelectedBatchPhoto(null);
+          }}
+        >
+          <div className="relative max-w-6xl w-full max-h-[90vh]">
+            <button
+              type="button"
+              onClick={() => setSelectedBatchPhoto(null)}
+              className="absolute -top-12 right-0 text-[#FFD700] text-sm uppercase tracking-[0.22em] border border-[#FFD700]/35 bg-black/70 rounded-md px-4 py-2 hover:bg-[#FFD700] hover:text-black transition-all duration-300"
+            >
+              Close
+            </button>
+            <img
+              src={selectedBatchPhoto}
+              alt={`${activeBatch.label} preview`}
+              className="max-h-[90vh] w-auto max-w-full mx-auto object-contain rounded-2xl border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.65)]"
+            />
           </div>
         </div>
       )}
