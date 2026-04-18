@@ -2301,3 +2301,14 @@ video {
     display: none !important;
   }
 }
+
+/* Native cursor mode for photo viewers */
+body.native-cursor-viewer,
+body.native-cursor-viewer * {
+  cursor: auto !important;
+}
+
+body.native-cursor-viewer #spot,
+body.native-cursor-viewer #curs {
+  display: none !important;
+}

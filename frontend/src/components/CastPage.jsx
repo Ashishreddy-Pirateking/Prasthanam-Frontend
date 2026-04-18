@@ -219,6 +219,12 @@ export default function CastPage() {
   }, [selectedBatchPhoto, showBatchGallery]);
 
   useEffect(() => {
+    const shouldUseNativeCursor = Boolean(showBatchGallery || selectedBatchPhoto);
+    document.body.classList.toggle("native-cursor-viewer", shouldUseNativeCursor);
+    return () => document.body.classList.remove("native-cursor-viewer");
+  }, [selectedBatchPhoto, showBatchGallery]);
+
+  useEffect(() => {
     if (activePhotos.length <= 1) return;
     const timer = setInterval(() => {
       setSlideIndex((prev) => (prev + 1) % activePhotos.length);

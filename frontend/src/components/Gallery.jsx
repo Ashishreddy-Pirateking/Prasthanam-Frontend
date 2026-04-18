@@ -80,6 +80,12 @@ export default function Gallery() {
     return () => document.body.classList.remove("gallery-page");
   }, []);
 
+  useEffect(() => {
+    const shouldUseNativeCursor = Boolean(showAllPhotos || modalSrc);
+    document.body.classList.toggle("native-cursor-viewer", shouldUseNativeCursor);
+    return () => document.body.classList.remove("native-cursor-viewer");
+  }, [modalSrc, showAllPhotos]);
+
   const loadMoreGalleryImages = () => {
     setVisibleGalleryCount((current) => Math.min(current + GALLERY_BATCH_SIZE, archiveGalleryImages.length));
   };
