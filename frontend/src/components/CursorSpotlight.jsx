@@ -34,11 +34,8 @@ export default function CursorSpotlight() {
     bodyEl.style.setProperty("cursor", "none", "important");
 
     const state = {
-      currentX: initialPosition.current.x,
-      currentY: initialPosition.current.y,
-      targetX: initialPosition.current.x,
-      targetY: initialPosition.current.y,
-      frameId: 0,
+      x: initialPosition.current.x,
+      y: initialPosition.current.y,
     };
 
     const forceVisible = () => {
@@ -77,54 +74,24 @@ export default function CursorSpotlight() {
       }
     };
 
-    const tick = () => {
-      state.currentX += (state.targetX - state.currentX) * 0.18;
-      state.currentY += (state.targetY - state.currentY) * 0.18;
-      forceVisible();
-      applyPosition(state.currentX, state.currentY);
-
-      const settled =
-        Math.abs(state.targetX - state.currentX) < 0.05 &&
-        Math.abs(state.targetY - state.currentY) < 0.05;
-
-      if (settled) {
-        state.currentX = state.targetX;
-        state.currentY = state.targetY;
-        applyPosition(state.currentX, state.currentY);
-        state.frameId = 0;
-        return;
-      }
-
-      state.frameId = window.requestAnimationFrame(tick);
-    };
-
-    const ensureAnimation = () => {
-      if (!state.frameId) {
-        state.frameId = window.requestAnimationFrame(tick);
-      }
-    };
-
     const handleMove = (event) => {
       if (event.pointerType === "touch") return;
 
-      state.targetX = event.clientX;
-      state.targetY = event.clientY;
+      state.x = event.clientX;
+      state.y = event.clientY;
       forceVisible();
-      ensureAnimation();
+      applyPosition(state.x, state.y);
     };
 
     forceVisible();
-    applyPosition(state.currentX, state.currentY);
+    applyPosition(state.x, state.y);
 
     window.addEventListener("pointermove", handleMove, { passive: true });
     window.addEventListener("mousemove", handleMove, { passive: true });
     window.addEventListener("pointerdown", handleMove, { passive: true });
+    window.addEventListener("pointerrawupdate", handleMove, { passive: true });
 
     return () => {
-      if (state.frameId) {
-        window.cancelAnimationFrame(state.frameId);
-      }
-
       if (styleTag.parentNode) {
         styleTag.parentNode.removeChild(styleTag);
       }
@@ -135,6 +102,7 @@ export default function CursorSpotlight() {
       window.removeEventListener("pointermove", handleMove);
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("pointerdown", handleMove);
+      window.removeEventListener("pointerrawupdate", handleMove);
     };
   }, []);
 
@@ -153,10 +121,11 @@ export default function CursorSpotlight() {
           position: "fixed",
           top: "0px",
           left: "0px",
-          width: "200px",
-          height: "200px",
+          width: "112px",
+          height: "112px",
           background:
-            "radial-gradient(circle, rgba(255,215,0,0.24) 0%, rgba(255,215,0,0.12) 22%, rgba(0,0,0,0) 72%)",
+            "radial-gradient(circle, rgba(255,215,0,0.18) 0%, rgba(255,215,0,0.10) 34%, rgba(255,215,0,0.04) 56%, rgba(0,0,0,0) 78%)",
+          filter: "blur(1px)",
           mixBlendMode: "screen",
           transform: initialTransform,
           pointerEvents: "none",
@@ -164,8 +133,7 @@ export default function CursorSpotlight() {
           opacity: "1",
           display: "block",
           visibility: "visible",
-          transition: "opacity .16s ease",
-          willChange: "transform, opacity",
+          willChange: "transform, opacity, filter",
           borderRadius: "50%",
         }}
       />
@@ -177,14 +145,14 @@ export default function CursorSpotlight() {
           position: "fixed",
           top: "0px",
           left: "0px",
-          width: "10px",
-          height: "10px",
-          background: "radial-gradient(circle, #fff8d9 0%, var(--gold) 55%, #c48d00 100%)",
+          width: "7px",
+          height: "7px",
+          background: "#FFD700",
           borderRadius: "50%",
           transform: initialTransform,
           pointerEvents: "none",
           zIndex: 2147483647,
-          boxShadow: "0 0 12px rgba(255,215,0,0.95), 0 0 30px rgba(255,215,0,0.32)",
+          boxShadow: "0 0 3px rgba(255,215,0,0.90), 0 0 7px rgba(255,215,0,0.18)",
           opacity: "1",
           display: "block",
           visibility: "visible",
