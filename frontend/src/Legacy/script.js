@@ -222,22 +222,87 @@ if (skipCurtain === "1") {
     // --- Custom Cursor Logic ---
     const curs = document.getElementById('curs');
     const spot = document.getElementById('spot');
-    
-    window.addEventListener('mousemove', (e) => {
-        const x = e.clientX, y = e.clientY;
-        if (curs) { curs.style.left = x + 'px'; curs.style.top = y + 'px'; }
-        if (spot) { spot.style.left = x + 'px'; spot.style.top = y + 'px'; }
-    });
 
-    window.addEventListener('blur', () => {
-        if (spot) { spot.style.width = '0px'; spot.style.height = '0px'; }
-    });
-    window.addEventListener('focus', () => {
-        if (spot) {
-            const size = getComputedStyle(document.documentElement).getPropertyValue('--spotlight-size')?.trim() || '200px';
-            spot.style.width = size; spot.style.height = size;
-        }
-    });
+    if (curs && spot) {
+        const initialX = window.innerWidth / 2;
+        const initialY = window.innerHeight / 2;
+
+        const state = {
+            currentX: initialX,
+            currentY: initialY,
+            targetX: initialX,
+            targetY: initialY,
+            frameId: 0,
+        };
+
+        const applyPosition = (x, y) => {
+            const transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+            curs.style.transform = transform;
+            spot.style.transform = transform;
+        };
+
+        const setVisible = (visible) => {
+            const opacity = visible ? '1' : '0';
+            curs.style.opacity = opacity;
+            spot.style.opacity = opacity;
+        };
+
+        const tick = () => {
+            state.currentX += (state.targetX - state.currentX) * 0.18;
+            state.currentY += (state.targetY - state.currentY) * 0.18;
+            applyPosition(state.currentX, state.currentY);
+
+            const settled =
+                Math.abs(state.targetX - state.currentX) < 0.05 &&
+                Math.abs(state.targetY - state.currentY) < 0.05;
+
+            if (settled) {
+                state.currentX = state.targetX;
+                state.currentY = state.targetY;
+                applyPosition(state.currentX, state.currentY);
+                state.frameId = 0;
+                return;
+            }
+
+            state.frameId = window.requestAnimationFrame(tick);
+        };
+
+        const ensureAnimation = () => {
+            if (!state.frameId) {
+                state.frameId = window.requestAnimationFrame(tick);
+            }
+        };
+
+        const handleMove = (e) => {
+            if (e.pointerType === 'touch') return;
+            state.targetX = e.clientX;
+            state.targetY = e.clientY;
+            setVisible(true);
+            ensureAnimation();
+        };
+
+        const handleBlur = () => setVisible(false);
+        const handleFocus = () => {
+            setVisible(true);
+            ensureAnimation();
+        };
+
+        const handleVisibilityChange = () => {
+            const visible = document.visibilityState === 'visible';
+            setVisible(visible);
+            if (visible) ensureAnimation();
+        };
+
+        applyPosition(state.currentX, state.currentY);
+        setVisible(true);
+
+        window.addEventListener('pointermove', handleMove, { passive: true });
+        window.addEventListener('mousemove', handleMove, { passive: true });
+        window.addEventListener('pointerdown', handleMove, { passive: true });
+        window.addEventListener('blur', handleBlur);
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
 
     // --- Movie Reel Timeline ---
     initMovieReel();
