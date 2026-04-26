@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 const getInitialPosition = () => {
@@ -17,17 +17,18 @@ export default function CursorSpotlight() {
   const spotRef = useRef(null);
   const initialPosition = useRef(getInitialPosition());
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof window === "undefined") return undefined;
 
     const htmlEl = document.documentElement;
     const bodyEl = document.body;
     const previousHtmlCursor = htmlEl.style.cursor;
     const previousBodyCursor = bodyEl.style.cursor;
+    bodyEl.classList.remove("native-cursor-viewer");
 
     const styleTag = document.createElement("style");
     styleTag.textContent =
-      "html body, html body *, html body *::before, html body *::after, html body.native-cursor-viewer, html body.native-cursor-viewer *, html body.native-cursor-viewer *::before, html body.native-cursor-viewer *::after { cursor: none !important; } input, textarea, select, button { cursor: none !important; }";
+      "html, body, body *, body *::before, body *::after, input, textarea, select, button, a, [role='button'] { cursor: none !important; }";
     document.head.appendChild(styleTag);
     htmlEl.style.setProperty("cursor", "none", "important");
     bodyEl.style.setProperty("cursor", "none", "important");
@@ -38,6 +39,30 @@ export default function CursorSpotlight() {
       targetX: initialPosition.current.x,
       targetY: initialPosition.current.y,
       frameId: 0,
+    };
+
+    const forceVisible = () => {
+      if (spotRef.current) {
+        spotRef.current.style.setProperty("position", "fixed", "important");
+        spotRef.current.style.setProperty("top", "0px", "important");
+        spotRef.current.style.setProperty("left", "0px", "important");
+        spotRef.current.style.setProperty("z-index", "2147483647", "important");
+        spotRef.current.style.setProperty("pointer-events", "none", "important");
+        spotRef.current.style.setProperty("display", "block", "important");
+        spotRef.current.style.setProperty("visibility", "visible", "important");
+        spotRef.current.style.setProperty("opacity", "1", "important");
+      }
+
+      if (cursRef.current) {
+        cursRef.current.style.setProperty("position", "fixed", "important");
+        cursRef.current.style.setProperty("top", "0px", "important");
+        cursRef.current.style.setProperty("left", "0px", "important");
+        cursRef.current.style.setProperty("z-index", "2147483647", "important");
+        cursRef.current.style.setProperty("pointer-events", "none", "important");
+        cursRef.current.style.setProperty("display", "block", "important");
+        cursRef.current.style.setProperty("visibility", "visible", "important");
+        cursRef.current.style.setProperty("opacity", "1", "important");
+      }
     };
 
     const applyPosition = (x, y) => {
@@ -52,21 +77,10 @@ export default function CursorSpotlight() {
       }
     };
 
-    const setVisible = (visible) => {
-      const opacity = visible ? "1" : "0";
-
-      if (spotRef.current) {
-        spotRef.current.style.opacity = opacity;
-      }
-
-      if (cursRef.current) {
-        cursRef.current.style.opacity = opacity;
-      }
-    };
-
     const tick = () => {
       state.currentX += (state.targetX - state.currentX) * 0.18;
       state.currentY += (state.targetY - state.currentY) * 0.18;
+      forceVisible();
       applyPosition(state.currentX, state.currentY);
 
       const settled =
@@ -95,35 +109,16 @@ export default function CursorSpotlight() {
 
       state.targetX = event.clientX;
       state.targetY = event.clientY;
-      setVisible(true);
+      forceVisible();
       ensureAnimation();
     };
 
-    const handleBlur = () => setVisible(false);
-
-    const handleFocus = () => {
-      setVisible(true);
-      ensureAnimation();
-    };
-
-    const handleVisibilityChange = () => {
-      const visible = document.visibilityState === "visible";
-      setVisible(visible);
-
-      if (visible) {
-        ensureAnimation();
-      }
-    };
-
+    forceVisible();
     applyPosition(state.currentX, state.currentY);
-    setVisible(true);
 
     window.addEventListener("pointermove", handleMove, { passive: true });
     window.addEventListener("mousemove", handleMove, { passive: true });
     window.addEventListener("pointerdown", handleMove, { passive: true });
-    window.addEventListener("blur", handleBlur);
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       if (state.frameId) {
@@ -140,9 +135,6 @@ export default function CursorSpotlight() {
       window.removeEventListener("pointermove", handleMove);
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("pointerdown", handleMove);
-      window.removeEventListener("blur", handleBlur);
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -161,18 +153,19 @@ export default function CursorSpotlight() {
           position: "fixed",
           top: "0px",
           left: "0px",
-          width: "500px",
-          height: "500px",
+          width: "200px",
+          height: "200px",
           background:
-            "radial-gradient(circle, rgba(255,215,0,0.42) 0%, rgba(255,215,0,0.24) 24%, rgba(255,215,0,0.12) 40%, rgba(0,0,0,0) 72%)",
-          filter: "blur(18px)",
+            "radial-gradient(circle, rgba(255,215,0,0.24) 0%, rgba(255,215,0,0.12) 22%, rgba(0,0,0,0) 72%)",
           mixBlendMode: "screen",
           transform: initialTransform,
           pointerEvents: "none",
           zIndex: 2147483647,
           opacity: "1",
           display: "block",
-          willChange: "transform, opacity, filter",
+          visibility: "visible",
+          transition: "opacity .16s ease",
+          willChange: "transform, opacity",
           borderRadius: "50%",
         }}
       />
@@ -186,7 +179,7 @@ export default function CursorSpotlight() {
           left: "0px",
           width: "10px",
           height: "10px",
-          background: "radial-gradient(circle, #fff8d9 0%, #FFD700 55%, #c48d00 100%)",
+          background: "radial-gradient(circle, #fff8d9 0%, var(--gold) 55%, #c48d00 100%)",
           borderRadius: "50%",
           transform: initialTransform,
           pointerEvents: "none",
@@ -194,6 +187,7 @@ export default function CursorSpotlight() {
           boxShadow: "0 0 12px rgba(255,215,0,0.95), 0 0 30px rgba(255,215,0,0.32)",
           opacity: "1",
           display: "block",
+          visibility: "visible",
           willChange: "transform",
         }}
       />
