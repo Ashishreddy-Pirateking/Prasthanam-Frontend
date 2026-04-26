@@ -20,10 +20,17 @@ export default function CursorSpotlight() {
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    const previousHtmlCursor = htmlEl.style.cursor;
+    const previousBodyCursor = bodyEl.style.cursor;
+
     const styleTag = document.createElement("style");
     styleTag.textContent =
-      "*, *::before, *::after { cursor: none !important; } input, textarea, select, button { cursor: none !important; }";
+      "html body, html body *, html body *::before, html body *::after, html body.native-cursor-viewer, html body.native-cursor-viewer *, html body.native-cursor-viewer *::before, html body.native-cursor-viewer *::after { cursor: none !important; } input, textarea, select, button { cursor: none !important; }";
     document.head.appendChild(styleTag);
+    htmlEl.style.setProperty("cursor", "none", "important");
+    bodyEl.style.setProperty("cursor", "none", "important");
 
     const state = {
       currentX: initialPosition.current.x,
@@ -127,6 +134,9 @@ export default function CursorSpotlight() {
         styleTag.parentNode.removeChild(styleTag);
       }
 
+      htmlEl.style.cursor = previousHtmlCursor;
+      bodyEl.style.cursor = previousBodyCursor;
+
       window.removeEventListener("pointermove", handleMove);
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("pointerdown", handleMove);
@@ -154,13 +164,15 @@ export default function CursorSpotlight() {
           width: "500px",
           height: "500px",
           background:
-            "radial-gradient(circle, rgba(255,215,0,0.5) 0%, rgba(255,215,0,0.25) 30%, rgba(0,0,0,0) 70%)",
+            "radial-gradient(circle, rgba(255,215,0,0.42) 0%, rgba(255,215,0,0.24) 24%, rgba(255,215,0,0.12) 40%, rgba(0,0,0,0) 72%)",
+          filter: "blur(18px)",
+          mixBlendMode: "screen",
           transform: initialTransform,
           pointerEvents: "none",
           zIndex: 2147483647,
           opacity: "1",
           display: "block",
-          willChange: "transform",
+          willChange: "transform, opacity, filter",
           borderRadius: "50%",
         }}
       />
