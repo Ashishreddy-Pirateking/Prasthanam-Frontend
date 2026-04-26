@@ -20,6 +20,11 @@ export default function CursorSpotlight() {
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
+    const styleTag = document.createElement("style");
+    styleTag.textContent =
+      "*, *::before, *::after { cursor: none !important; } input, textarea, select, button { cursor: none !important; }";
+    document.head.appendChild(styleTag);
+
     const state = {
       currentX: initialPosition.current.x,
       currentY: initialPosition.current.y,
@@ -116,6 +121,10 @@ export default function CursorSpotlight() {
     return () => {
       if (state.frameId) {
         window.cancelAnimationFrame(state.frameId);
+      }
+
+      if (styleTag.parentNode) {
+        styleTag.parentNode.removeChild(styleTag);
       }
 
       window.removeEventListener("pointermove", handleMove);

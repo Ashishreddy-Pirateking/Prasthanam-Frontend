@@ -30,11 +30,8 @@ const resolveZodiacSymbol = (value) => {
 export default function Team() {
   const { siteContent, loading } = useSiteContent();
   const governors = Array.isArray(siteContent?.governors) ? siteContent.governors : [];
-  const [flippedCardIndex, setFlippedCardIndex] = useState(null);
-
-  const toggleFlip = (index) => {
-    setFlippedCardIndex(prev => prev === index ? null : index);
-  };
+  const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
+  const [touchedCardIndex, setTouchedCardIndex] = useState(null);
 
   if (!siteContent && loading) {
     return (
@@ -66,12 +63,25 @@ export default function Team() {
           let quoteSizeClass = "text-[22px] md:text-[26px]";
           if (quoteText.length > 30) quoteSizeClass = "text-[18px] md:text-[20px]";
           else if (quoteText.length > 22) quoteSizeClass = "text-[20px] md:text-[22px]";
+          const isFlipped = hoveredCardIndex === index || touchedCardIndex === index;
 
           return (
             <div
               key={`${g.name}-${index}`}
-              className={`group relative card-3d w-[85%] md:w-full mx-auto aspect-[5/7] cursor-pointer ${flippedCardIndex === index ? 'is-flipped' : ''}`}
-              onClick={() => toggleFlip(index)}
+              className={`group relative card-3d w-[85%] md:w-full mx-auto aspect-[5/7] cursor-pointer ${isFlipped ? "is-flipped" : ""}`}
+              onPointerEnter={(event) => {
+                if (event.pointerType === "touch") return;
+                setTouchedCardIndex(null);
+                setHoveredCardIndex(index);
+              }}
+              onPointerLeave={(event) => {
+                if (event.pointerType === "touch") return;
+                setHoveredCardIndex((prev) => (prev === index ? null : prev));
+              }}
+              onPointerDown={(event) => {
+                if (event.pointerType !== "touch") return;
+                setTouchedCardIndex((prev) => (prev === index ? null : index));
+              }}
             >
               <div className="relative w-full h-full card-inner preserve-3d">
                 <div className="card-front absolute inset-0 backface-hidden bg-[#111] border border-[#333] overflow-hidden rounded-lg">
