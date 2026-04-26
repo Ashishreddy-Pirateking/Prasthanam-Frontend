@@ -137,16 +137,44 @@ export default function CursorSpotlight() {
       <div
         id="spot"
         ref={spotRef}
-        className="spotlight"
         aria-hidden="true"
-        style={{ transform: initialTransform, opacity: 1 }}
+        style={{
+          position: "fixed",
+          top: "0px",
+          left: "0px",
+          width: "500px",
+          height: "500px",
+          background:
+            "radial-gradient(circle, rgba(255,215,0,0.5) 0%, rgba(255,215,0,0.25) 30%, rgba(0,0,0,0) 70%)",
+          transform: initialTransform,
+          pointerEvents: "none",
+          zIndex: 2147483647,
+          opacity: "1",
+          display: "block",
+          willChange: "transform",
+          borderRadius: "50%",
+        }}
       />
       <div
         id="curs"
         ref={cursRef}
-        className="cursor-dot"
         aria-hidden="true"
-        style={{ transform: initialTransform, opacity: 1 }}
+        style={{
+          position: "fixed",
+          top: "0px",
+          left: "0px",
+          width: "10px",
+          height: "10px",
+          background: "radial-gradient(circle, #fff8d9 0%, #FFD700 55%, #c48d00 100%)",
+          borderRadius: "50%",
+          transform: initialTransform,
+          pointerEvents: "none",
+          zIndex: 2147483647,
+          boxShadow: "0 0 12px rgba(255,215,0,0.95), 0 0 30px rgba(255,215,0,0.32)",
+          opacity: "1",
+          display: "block",
+          willChange: "transform",
+        }}
       />
     </>,
     document.body
