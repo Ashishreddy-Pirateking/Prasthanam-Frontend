@@ -141,6 +141,12 @@ const GOVERNOR_NAMES_BY_BATCH = {
     "Nistala Valli Satvika",
     "Rasamalla Manish",
   ],
+  2024: [
+    "Srikar Prakash",
+    "Jaideep",
+    "Dhyamini",
+    "Pavana Laxhmi Batu",
+  ],
   2022: [
     "Darapu Adhitya Shivakumar reddy",
     "Yedla Gowthami",

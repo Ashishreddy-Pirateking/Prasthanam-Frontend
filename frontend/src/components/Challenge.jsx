@@ -671,7 +671,7 @@ export default function Challenge() {
                       }}
                     />
                     <p className="text-[#FFD700] text-sm font-bold">{judgingMsg}</p>
-                    <p className="text-gray-400 text-xs mt-1">Groq AI — analyzing facial cues</p>
+                    <p className="text-gray-400 text-xs mt-1">Prasthanam AI director is analysing</p>
                   </div>
                 </div>
               )}

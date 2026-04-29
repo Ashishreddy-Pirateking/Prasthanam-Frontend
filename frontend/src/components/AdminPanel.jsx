@@ -38,6 +38,7 @@ const createCastBatchFromYear = (yearValue) => {
     label: year ? `Batch of ${year}` : "",
     yearRange: year ? `${year} - ${nextYear}` : "",
     members: [],
+    governorNames: [],
     photos: [],
   };
 };
@@ -98,6 +99,7 @@ export default function AdminPanel() {
     return {
       ...batch,
       members: Array.isArray(batch.members) ? batch.members : [],
+      governorNames: Array.isArray(batch.governorNames) ? batch.governorNames : [],
       photos: Array.isArray(batch.photos) ? batch.photos : [],
     };
   }, [content.castBatches, selectedCastYear]);
@@ -779,6 +781,22 @@ export default function AdminPanel() {
               rows={4}
               className="w-full px-3 py-2 rounded bg-black/60 border border-white/15 focus:border-[#FFD700]/60 outline-none resize-y"
             />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-[#FFD700] tracking-[0.12em] uppercase">Highlighted Governors</p>
+                <span className="text-[11px] text-gray-400 uppercase tracking-[0.12em]">Optional</span>
+              </div>
+              <textarea
+                value={arrayToLines(selectedCastBatch.governorNames)}
+                onChange={(event) => updateSelectedCastBatch("governorNames", linesToArray(event.target.value))}
+                placeholder="One name per line"
+                rows={3}
+                className="w-full px-3 py-2 rounded bg-black/60 border border-white/15 focus:border-[#FFD700]/60 outline-none resize-y"
+              />
+              <p className="text-[11px] text-gray-400">
+                These names will be gold-highlighted on the public cast page for this batch.
+              </p>
+            </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-[#FFD700] tracking-[0.12em] uppercase">Batch Photos</p>
