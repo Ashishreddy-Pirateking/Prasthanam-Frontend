@@ -312,7 +312,6 @@ export default function AdminPanel() {
 
   const addPlayToSelectedNavarasa = () => {
     const playName = String(newPlayName || "").trim();
-    if (!playName) return;
     updateSelectedNavarasa("plays", [...(selectedNavarasa.plays || []), playName]);
     setNewPlayName("");
   };
