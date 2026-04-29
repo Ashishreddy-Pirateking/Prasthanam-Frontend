@@ -3,7 +3,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { createDefaultSiteContent } from "../data/defaultSiteContent";
 import { fetchPublicSiteContent } from "../services/service";
 import {
+  SITE_CONTENT_CACHE_KEY,
   mergeSiteContent,
+  readCachedSiteContent,
   writeCachedSiteContent,
 } from "../utils/siteContent";
 
@@ -18,7 +20,7 @@ const AUTO_REFRESH_MS = 15000;
 
 export function SiteContentProvider({ children }) {
   // Start null so components know backend hasn't responded yet
-  const [siteContent, setSiteContent] = useState(null);
+  const [siteContent, setSiteContent] = useState(() => readCachedSiteContent());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -33,7 +35,7 @@ export function SiteContentProvider({ children }) {
     } catch (err) {
       setError(err?.message || "Failed to load content.");
       // On failure, fall back to defaults so site isn't blank
-      setSiteContent((prev) => prev || createDefaultSiteContent());
+      setSiteContent((prev) => prev || readCachedSiteContent() || createDefaultSiteContent());
     } finally {
       if (!silent) setLoading(false);
     }
@@ -65,6 +67,22 @@ export function SiteContentProvider({ children }) {
       window.removeEventListener("focus", onFocus);
     };
   }, [fetchPublicContent]);
+
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (event.key !== SITE_CONTENT_CACHE_KEY || !event.newValue) return;
+
+      try {
+        setSiteContent(mergeSiteContent(JSON.parse(event.newValue)));
+        setError("");
+      } catch {
+        // Ignore malformed cache updates.
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const value = useMemo(
     () => ({

@@ -93,15 +93,7 @@ export default function AdminGalleryManager() {
       if (await handleUnauthorized(response)) return;
       const data = await parseApiResponse(response);
       if (!response.ok) throw new Error(data.message || "Failed to load gallery content.");
-      setContent({
-        ...createDefaultSiteContent(),
-        ...data,
-        gallery: {
-          ...createDefaultSiteContent().gallery,
-          ...(data.gallery || {}),
-          images: Array.isArray(data.gallery?.images) ? data.gallery.images : [],
-        },
-      });
+      setContent(mergeSiteContent(data));
     } catch (err) {
       setError(err?.message || "Failed to load gallery content.");
     } finally {
@@ -192,8 +184,10 @@ export default function AdminGalleryManager() {
 
       let savedMessage = "Gallery saved successfully.";
       try {
-        await refreshPublicSiteSnapshot();
-        savedMessage = "Gallery saved successfully. Live snapshot refreshed.";
+        const refreshResult = await refreshPublicSiteSnapshot();
+        savedMessage = refreshResult.refreshed
+          ? "Gallery saved successfully. Live snapshot refreshed."
+          : "Gallery saved successfully. Live snapshot will refresh when the snapshot endpoint is available.";
       } catch {
         savedMessage = "Gallery saved successfully. Live snapshot will refresh when the snapshot endpoint is available.";
       }

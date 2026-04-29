@@ -31,7 +31,9 @@ export default function Navarasas() {
   const { siteContent, loading } = useSiteContent();
 
   const rasaList = useMemo(() => {
-    const live = Array.isArray(siteContent?.navarasas) ? siteContent.navarasas : [];
+    const live = Array.isArray(siteContent?.navarasas) && siteContent.navarasas.length
+      ? siteContent.navarasas
+      : NAVARASAS;
     const fallbackById = Object.fromEntries(NAVARASAS.map((rasa) => [rasa.id, rasa]));
 
     return live.map((item) => ({
@@ -59,12 +61,19 @@ export default function Navarasas() {
       NAVARASAS[0],
     [rasaList, safeActiveRasaId]
   );
+  const accentColor = String(currentRasa?.glowColor || "#FFD700");
+  const iconMarkup = String(
+    currentRasa?.icon ||
+      NAVARASAS.find((rasa) => String(rasa.id) === String(currentRasa?.id || ""))?.icon ||
+      NAVARASAS[0]?.icon ||
+      ""
+  );
 
   const glowStyle = useMemo(
     () => ({
-      background: `radial-gradient(circle at center, ${(currentRasa?.glowColor || "#FFD700")}50 0%, #000000 80%)`,
+      background: `radial-gradient(circle at center, ${accentColor}50 0%, #000000 80%)`,
     }),
-    [currentRasa]
+    [accentColor]
   );
 
   if (!siteContent && loading) {
@@ -124,14 +133,14 @@ export default function Navarasas() {
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="w-full flex items-center justify-between bg-black/60 border text-white font-bold py-3 px-6 rounded-full font-['Cinzel'] tracking-[0.15em] outline-none backdrop-blur-md shadow-lg transition-all duration-300"
             style={{
-              boxShadow: `0 0 15px ${currentRasa.glowColor}`,
-              borderColor: currentRasa.glowColor,
+              boxShadow: `0 0 15px ${accentColor}`,
+              borderColor: accentColor,
             }}
           >
             <span className="flex-1 text-center uppercase">{String(currentRasa.name || "").toUpperCase()}</span>
             <svg 
               className={`fill-current h-5 w-5 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} 
-              style={{ color: currentRasa.glowColor }} 
+              style={{ color: accentColor }} 
               xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
             >
               <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
@@ -141,11 +150,11 @@ export default function Navarasas() {
           {/* Custom Dropdown Table */}
           <div 
             className={`absolute top-full left-4 right-4 mt-3 bg-black/90 backdrop-blur-xl border rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 transform origin-top ${isDropdownOpen ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'}`}
-            style={{ borderColor: currentRasa.glowColor, boxShadow: `0 10px 30px ${currentRasa.glowColor}40` }}
+            style={{ borderColor: accentColor, boxShadow: `0 10px 30px ${accentColor}40` }}
           >
             <ul 
               className="max-h-[300px] overflow-y-auto navarasa-mobile-scroll"
-              style={{ "--navarasa-scrollbar-color": currentRasa.glowColor }}
+              style={{ "--navarasa-scrollbar-color": accentColor }}
             >
               {rasaList.map((rasa) => (
                 <li key={rasa.id}>
@@ -155,7 +164,7 @@ export default function Navarasas() {
                       setIsDropdownOpen(false);
                     }}
                     className={`w-full text-center py-4 px-6 font-['Cinzel'] tracking-[0.15em] transition-colors ${activeRasaId === String(rasa.id) ? 'bg-white/10 font-bold text-lg' : 'hover:bg-white/5'} text-white uppercase border-b border-white/5 last:border-0`}
-                    style={activeRasaId === String(rasa.id) ? { color: rasa.glowColor } : {}}
+                    style={activeRasaId === String(rasa.id) ? { color: rasa.glowColor || accentColor } : {}}
                   >
                     {String(rasa.name || "").toUpperCase()}
                   </button>
@@ -181,7 +190,10 @@ export default function Navarasas() {
                 className={className}
                 style={
                   isActive
-                    ? { backgroundColor: rasa.glowColor, boxShadow: `0 0 20px ${rasa.glowColor}` }
+                    ? {
+                        backgroundColor: rasa.glowColor || accentColor,
+                        boxShadow: `0 0 20px ${rasa.glowColor || accentColor}`,
+                      }
                     : undefined
                 }
                 onClick={() => setActiveRasaId(String(rasa.id))}
@@ -195,11 +207,12 @@ export default function Navarasas() {
           <div id="rasaDisplay" className="flex flex-col justify-center items-center text-center md:text-left md:items-start space-y-6">
             <div className="transform transition-all duration-700 hover:scale-110">
               <div
-                className={`text-9xl ${currentRasa.textColor} opacity-100 filter drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]`}
-                dangerouslySetInnerHTML={{ __html: currentRasa.icon }}
+                className="text-9xl opacity-100 filter drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                style={{ color: accentColor }}
+                dangerouslySetInnerHTML={{ __html: iconMarkup }}
               />
             </div>
-            <div className={`border-t-2 border-${currentRasa.textColor.split("-")[1]}-500 w-24 my-6 opacity-50`} />
+            <div className="border-t-2 w-24 my-6 opacity-50" style={{ borderColor: accentColor }} />
             <h3
               className="text-5xl md:text-7xl text-white drop-shadow-lg tracking-wide transition-all duration-500"
               style={{ fontFamily: TELUGU_RASA_FONTS[currentRasa.id] || "'Sirivennela', sans-serif" }}
@@ -220,7 +233,10 @@ export default function Navarasas() {
                   key={play}
                   className="flex items-center text-xl text-gray-200 border-b border-white/5 pb-2 last:border-0"
                 >
-                  <span className={`${currentRasa.textColor} mr-3 text-base`}>●</span> {play}
+                  <span className="mr-3 text-base" style={{ color: accentColor }}>
+                    ●
+                  </span>{" "}
+                  {play}
                 </li>
               ))}
             </ul>

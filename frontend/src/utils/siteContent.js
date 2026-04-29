@@ -4,6 +4,28 @@ export const SITE_CONTENT_CACHE_KEY = "prasthanam_public_site_content";
 export const SITE_CONTENT_SNAPSHOT_ENDPOINT = "/api/site-content-snapshot";
 export const SITE_CONTENT_SNAPSHOT_PATHNAME = "site-content/public.json";
 
+const hashString = (value) => {
+  let hash = 0;
+  const input = String(value || "");
+
+  for (let index = 0; index < input.length; index += 1) {
+    hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
+  }
+
+  return hash;
+};
+
+const getNavarasaTemplate = (fallbackNavarasas, incomingRasa, index) => {
+  const id = String(incomingRasa?.id || "").trim();
+  const exactMatch = fallbackNavarasas.find((rasa) => String(rasa.id) === id);
+
+  if (exactMatch) return exactMatch;
+  if (!fallbackNavarasas.length) return {};
+
+  const seed = id || String(index);
+  return fallbackNavarasas[hashString(seed) % fallbackNavarasas.length] || {};
+};
+
 export const mergeSiteContent = (incoming) => {
   const fallback = createDefaultSiteContent();
   if (!incoming || typeof incoming !== "object") return fallback;
@@ -23,17 +45,28 @@ export const mergeSiteContent = (incoming) => {
         : fallback.timeline,
     navarasas:
       Array.isArray(incoming.navarasas) && incoming.navarasas.length
-        ? incoming.navarasas.map((incomingRasa) => {
-            const fallbackRasa = fallback.navarasas.find((r) => r.id === incomingRasa.id);
+        ? incoming.navarasas.map((incomingRasa, index) => {
+            const exactFallbackRasa = fallback.navarasas.find((rasa) => String(rasa.id) === String(incomingRasa?.id || "").trim());
+            const fallbackRasa = exactFallbackRasa || getNavarasaTemplate(fallback.navarasas, incomingRasa, index);
             return {
-              ...(fallbackRasa || {}),
+              ...fallbackRasa,
               ...incomingRasa,
+              glowColor: String(
+                incomingRasa?.glowColor || fallbackRasa?.glowColor || fallback.navarasas[0]?.glowColor || "#FFD700"
+              ),
+              textColor: String(
+                incomingRasa?.textColor ||
+                  fallbackRasa?.textColor ||
+                  fallback.navarasas[0]?.textColor ||
+                  "text-[#FFD700]"
+              ),
+              icon: String(incomingRasa?.icon || fallbackRasa?.icon || fallback.navarasas[0]?.icon || ""),
               // Use backend plays if non-empty, else fallback plays for that rasa
               plays:
                 Array.isArray(incomingRasa.plays) && incomingRasa.plays.length
-                  ? incomingRasa.plays
-                  : Array.isArray(fallbackRasa?.plays)
-                  ? fallbackRasa.plays
+                  ? incomingRasa.plays.map((play) => String(play || "").trim()).filter(Boolean)
+                  : Array.isArray(exactFallbackRasa?.plays)
+                  ? exactFallbackRasa.plays
                   : [],
             };
           })

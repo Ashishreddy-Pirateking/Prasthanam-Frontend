@@ -73,7 +73,9 @@ export default function AdminPanel() {
   const [message, setMessage] = useState("");
   const [pinSaveButton, setPinSaveButton] = useState(false);
   const saveButtonAnchorRef = useRef(null);
+  const navarasasListRef = useRef(null);
   const [selectedNavarasaId, setSelectedNavarasaId] = useState("shringara");
+  const selectedNavarasaIdRef = useRef(selectedNavarasaId);
   const [newPlayName, setNewPlayName] = useState("");
   const defaultCastYear = String(new Date().getFullYear());
   const [selectedCastYear, setSelectedCastYear] = useState(defaultCastYear);
@@ -107,6 +109,22 @@ export default function AdminPanel() {
       plays: Array.isArray(rasa.plays) ? rasa.plays : [],
     };
   }, [content.navarasas, selectedNavarasaId]);
+  const selectedNavarasaIndex = useMemo(
+    () => (content.navarasas || []).findIndex((rasa) => String(rasa.id) === String(selectedNavarasaId)),
+    [content.navarasas, selectedNavarasaId]
+  );
+
+  useEffect(() => {
+    selectedNavarasaIdRef.current = selectedNavarasaId;
+  }, [selectedNavarasaId]);
+
+  useEffect(() => {
+    const list = navarasasListRef.current;
+    const selectedButton = list?.children?.[selectedNavarasaIndex];
+    if (selectedButton && typeof selectedButton.scrollIntoView === "function") {
+      selectedButton.scrollIntoView({ block: "nearest" });
+    }
+  }, [selectedNavarasaIndex]);
 
   const logout = useCallback((redirectPath = "/") => {
     localStorage.removeItem("admin_token");
@@ -125,31 +143,20 @@ export default function AdminPanel() {
         for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
           try {
             const data = await fetchAdminSiteContent(token);
-            const incomingNavarasas = Array.isArray(data.navarasas) ? data.navarasas : [];
-            const incomingCastBatches = Array.isArray(data.castBatches) ? data.castBatches : [];
+            const mergedContent = mergeSiteContent(data);
+            const incomingNavarasas = Array.isArray(mergedContent.navarasas) ? mergedContent.navarasas : [];
+            const incomingCastBatches = Array.isArray(mergedContent.castBatches) ? mergedContent.castBatches : [];
             const preferredYear =
               incomingCastBatches
                 .map((batch) => String(batch?.id || ""))
                 .filter((year) => /^\d{4}$/.test(year))
                 .sort((a, b) => Number(b) - Number(a))[0] || defaultCastYear;
-            const preferredRasaId = String(incomingNavarasas[0]?.id || "shringara");
-            setContent({
-              ...createDefaultSiteContent(),
-              ...data,
-              gallery: {
-                ...createDefaultSiteContent().gallery,
-                ...(data.gallery || {}),
-                images: Array.isArray(data.gallery?.images) ? data.gallery.images : [],
-              },
-              timeline: Array.isArray(data.timeline) ? data.timeline : [],
-              navarasas: incomingNavarasas,
-              castBatches: incomingCastBatches,
-              governors: Array.isArray(data.governors) ? data.governors : [],
-              latestEvent: {
-                ...createDefaultSiteContent().latestEvent,
-                ...(data.latestEvent || {}),
-              },
-            });
+            const preferredRasaId = incomingNavarasas.some(
+              (rasa) => String(rasa.id) === String(selectedNavarasaIdRef.current)
+            )
+              ? String(selectedNavarasaIdRef.current)
+              : String(incomingNavarasas[0]?.id || "shringara");
+            setContent(mergedContent);
             setSelectedCastYear(preferredYear);
             setSelectedNavarasaId(preferredRasaId);
             return;
@@ -255,8 +262,10 @@ export default function AdminPanel() {
 
       let savedMessage = "Content saved successfully.";
       try {
-        await refreshPublicSiteSnapshot();
-        savedMessage = "Content saved successfully. Live snapshot refreshed.";
+        const refreshResult = await refreshPublicSiteSnapshot();
+        savedMessage = refreshResult.refreshed
+          ? "Content saved successfully. Live snapshot refreshed."
+          : "Content saved successfully. Live snapshot will refresh when the snapshot endpoint is available.";
       } catch {
         savedMessage = "Content saved successfully. Live snapshot will refresh when the snapshot endpoint is available.";
       }
@@ -599,7 +608,10 @@ export default function AdminPanel() {
             </button>
           </div>
           <div className="grid lg:grid-cols-[280px,1fr] gap-4">
-            <div className="border border-white/10 rounded-lg p-3 bg-black/30 space-y-2 max-h-[420px] overflow-auto">
+            <div
+              ref={navarasasListRef}
+              className="border border-white/10 rounded-lg p-3 bg-black/30 space-y-2 max-h-[420px] overflow-auto"
+            >
               {(content.navarasas || []).map((rasa) => {
                 const isActive = String(rasa.id) === String(selectedNavarasaId);
                 return (

@@ -1,4 +1,5 @@
 import { getApiBase } from "../utils/media";
+import { SITE_CONTENT_SNAPSHOT_ENDPOINT } from "../utils/siteContent";
 
 const API_BASE = getApiBase();
 
@@ -90,7 +91,26 @@ export const fetchPublicSiteContent = async () => {
   }
 };
 
-export const refreshPublicSiteSnapshot = () => fetchPublicSiteContent();
+export const refreshPublicSiteSnapshot = async () => {
+  const snapshotOrigin = typeof window !== "undefined" ? window.location.origin : API_BASE;
+
+  try {
+    const response = await fetch(`${snapshotOrigin}${SITE_CONTENT_SNAPSHOT_ENDPOINT}?refresh=1`, {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+    const data = await parseApiResponse(response);
+    if (!response.ok) {
+      throw createApiError(data?.message || "Snapshot refresh failed.", response.status);
+    }
+    return { refreshed: true, data };
+  } catch (error) {
+    const data = await fetchPublicSiteContent();
+    return { refreshed: false, data, error };
+  }
+};
 
 export const fetchAdminSiteContent = (token) =>
   apiRequest("/api/content/admin", {
