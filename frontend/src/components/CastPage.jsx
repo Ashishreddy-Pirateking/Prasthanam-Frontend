@@ -19,6 +19,8 @@ const toUniqueStrings = (items) => {
 };
 
 const normalizeBatchId = (value) => cleanString(value);
+const BLOCKED_GOVERNOR_NAMES = new Set(["kolati yamini priya"]);
+const normalizeGovernorName = (value) => cleanString(value).replace(/\s+/g, " ").toLowerCase();
 
 const tokenizeName = (value) =>
   cleanString(value)
@@ -208,7 +210,10 @@ export default function CastPage() {
   const safeSlideIndex = activePhotos.length > 0 ? slideIndex % activePhotos.length : 0;
 
   const activeGovernorNames = useMemo(
-    () => toUniqueStrings(activeBatch.governorNames),
+    () =>
+      toUniqueStrings(activeBatch.governorNames).filter(
+        (name) => !BLOCKED_GOVERNOR_NAMES.has(normalizeGovernorName(name))
+      ),
     [activeBatch]
   );
 
