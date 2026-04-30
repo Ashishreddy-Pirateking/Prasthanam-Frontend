@@ -329,7 +329,9 @@ export default function CastPage() {
                   .map((member) => String(member || "").trim())
                   .filter(Boolean)
                   .map((member, memberIndex) => {
-                    const isGovernor = activeGovernorNames.some((governorName) => namesMatch(member, governorName));
+                    const isBlockedGovernor = BLOCKED_GOVERNOR_NAMES.has(normalizeGovernorName(member));
+                    const isGovernor =
+                      !isBlockedGovernor && activeGovernorNames.some((governorName) => namesMatch(member, governorName));
                     return (
                       <div
                         key={`${member}-${memberIndex}`}
