@@ -15,6 +15,10 @@ const hashString = (value) => {
   return hash;
 };
 
+const normalizeGovernorName = (value) => String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+const blockedGovernorNames = new Set(["kolati yamini priya"]);
+const keepGovernorName = (value) => !blockedGovernorNames.has(normalizeGovernorName(value));
+
 const getNavarasaTemplate = (fallbackNavarasas, incomingRasa, index) => {
   const id = String(incomingRasa?.id || "").trim();
   const exactMatch = fallbackNavarasas.find((rasa) => String(rasa.id) === id);
@@ -73,8 +77,24 @@ export const mergeSiteContent = (incoming) => {
         : fallback.navarasas,
     castBatches:
       Array.isArray(incoming.castBatches) && incoming.castBatches.length
-        ? incoming.castBatches
-        : fallback.castBatches,
+        ? incoming.castBatches.map((batch) => {
+            const safeBatch = batch && typeof batch === "object" ? batch : {};
+            return {
+              ...safeBatch,
+              governorNames: Array.isArray(safeBatch.governorNames)
+                ? safeBatch.governorNames.map((name) => String(name || "").trim()).filter(keepGovernorName)
+                : [],
+            };
+          })
+        : fallback.castBatches.map((batch) => {
+            const safeBatch = batch && typeof batch === "object" ? batch : {};
+            return {
+              ...safeBatch,
+              governorNames: Array.isArray(safeBatch.governorNames)
+                ? safeBatch.governorNames.map((name) => String(name || "").trim()).filter(keepGovernorName)
+                : [],
+            };
+          }),
     governors:
       Array.isArray(incoming.governors) && incoming.governors.length
         ? incoming.governors
