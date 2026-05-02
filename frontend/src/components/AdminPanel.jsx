@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createDefaultSiteContent } from "../data/defaultSiteContent";
+import { buildCastBatchMetadata, normalizeCastBatchRecord } from "../utils/castBatches";
 import { resolveMediaUrl } from "../utils/media";
 import {
   fetchAdminSiteContent,
@@ -30,13 +31,8 @@ const buildCastYearOptions = (startYear, endYear) => {
   return years;
 };
 const createCastBatchFromYear = (yearValue) => {
-  const year = String(yearValue || "").trim();
-  const yearNum = Number(year);
-  const nextYear = Number.isFinite(yearNum) ? yearNum + 4 : "";
   return {
-    id: year,
-    label: year ? `Batch of ${year}` : "",
-    yearRange: year ? `${year} - ${nextYear}` : "",
+    ...buildCastBatchMetadata(yearValue),
     members: [],
     governorNames: [],
     photos: [],
@@ -95,13 +91,7 @@ export default function AdminPanel() {
   ];
   const selectedCastBatch = useMemo(() => {
     const found = (content.castBatches || []).find((batch) => String(batch.id) === String(selectedCastYear));
-    const batch = found || createCastBatchFromYear(selectedCastYear);
-    return {
-      ...batch,
-      members: Array.isArray(batch.members) ? batch.members : [],
-      governorNames: Array.isArray(batch.governorNames) ? batch.governorNames : [],
-      photos: Array.isArray(batch.photos) ? batch.photos : [],
-    };
+    return normalizeCastBatchRecord(found || createCastBatchFromYear(selectedCastYear));
   }, [content.castBatches, selectedCastYear]);
   const selectedNavarasa = useMemo(() => {
     const found = (content.navarasas || []).find((rasa) => String(rasa.id) === String(selectedNavarasaId));
@@ -248,10 +238,7 @@ export default function AdminPanel() {
         gallery: {
           images: Array.isArray(galleryImages) ? galleryImages : [],
         },
-        castBatches: castBatches.map((batch) => ({
-          ...batch,
-          photos: Array.isArray(batch.photos) ? batch.photos : [],
-        })),
+        castBatches: castBatches.map((batch) => normalizeCastBatchRecord(batch)),
         timeline,
         navarasas,
         governors: content.governors || [],
@@ -752,7 +739,7 @@ export default function AdminPanel() {
             </div>
           </div>
           <p className="text-xs text-gray-400 uppercase tracking-[0.14em] mb-3">
-            Batch year = joining year. Default range auto-follows as {selectedCastYear} - {Number(selectedCastYear) + 4}.
+            Batch year = joining year. The public range and roll-no example are generated from the year automatically.
           </p>
           <div className="border border-white/10 rounded-lg p-4 bg-black/30 space-y-3">
             <div className="grid md:grid-cols-3 gap-2">
@@ -768,10 +755,9 @@ export default function AdminPanel() {
                 className="px-3 py-2 rounded bg-black/60 border border-white/15 focus:border-[#FFD700]/60 outline-none"
               />
               <input
-                value={selectedCastBatch.yearRange || `${selectedCastYear} - ${Number(selectedCastYear) + 4}`}
-                onChange={(event) => updateSelectedCastBatch("yearRange", event.target.value)}
-                placeholder={`${selectedCastYear} - ${Number(selectedCastYear) + 4}`}
-                className="px-3 py-2 rounded bg-black/60 border border-white/15 focus:border-[#FFD700]/60 outline-none"
+                value={selectedCastBatch.yearRange || buildCastBatchMetadata(selectedCastYear).yearRange}
+                readOnly
+                className="px-3 py-2 rounded bg-black/50 border border-white/15 text-gray-300 outline-none cursor-not-allowed"
               />
             </div>
             <textarea

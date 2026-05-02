@@ -3,6 +3,7 @@ import logo from "../Legacy/logo.png";
 import stageImg from "../Legacy/stage.jpg";
 import { CAST_BATCHES } from "../data/legacyData";
 import { useSiteContent } from "../context/SiteContentContext";
+import { normalizeCastBatchRecord } from "../utils/castBatches";
 import { resolveMediaUrl } from "../utils/media";
 
 const cleanString = (value) => String(value || "").trim();
@@ -179,9 +180,9 @@ const mergeCastBatches = (incomingBatches, fallbackBatches) => {
       };
     });
 
-  return [...mergedFallbackBatches, ...extraIncomingBatches].sort(
-    (firstBatch, secondBatch) => Number(secondBatch.id) - Number(firstBatch.id)
-  );
+  return [...mergedFallbackBatches, ...extraIncomingBatches]
+    .map((batch) => normalizeCastBatchRecord(batch))
+    .sort((firstBatch, secondBatch) => Number(secondBatch.id) - Number(firstBatch.id));
 };
 
 export default function CastPage() {
@@ -287,7 +288,7 @@ export default function CastPage() {
           <div className="bg-black/50 border border-white/10 rounded-2xl p-6">
             <p className="text-[#FFD700] font-cinzel tracking-[0.2em] uppercase text-xs mb-2">Active Batch</p>
             <h2 className="text-2xl md:text-3xl font-cinzel mb-2">{activeBatch.label}</h2>
-            <p className="text-sm text-gray-400 mb-5">{activeBatch.yearRange}</p>
+            <p className="text-sm text-gray-400 mb-5 leading-6">{activeBatch.yearRange}</p>
             <div className="border-t border-white/10 pt-4">
               <p className="text-[#FFD700] text-xs uppercase tracking-[0.2em] mb-3">Batch Photos</p>
               <button

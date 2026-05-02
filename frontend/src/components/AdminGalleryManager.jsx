@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createDefaultSiteContent } from "../data/defaultSiteContent";
-import { refreshPublicSiteSnapshot } from "../services/service";
+import { refreshPublicSiteSnapshot, uploadAdminImage } from "../services/service";
 import { getApiBase, resolveMediaUrl } from "../utils/media";
 import { mergeSiteContent, writeCachedSiteContent } from "../utils/siteContent";
 
@@ -109,34 +109,81 @@ export default function AdminGalleryManager() {
     loadContent();
   }, [loadContent, token]);
 
-  const uploadImage = async (file) => {
-    if (!file) return "";
-    setUploading(true);
-    setError("");
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch(
-        `${API_BASE}/api/content/admin/upload`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+  const uploadImage = useCallback(
+    async (file) => {
+      if (!file) return "";
+      try {
+        const data = await uploadAdminImage(token, file);
+        return data.fileUrl || "";
+      } catch (err) {
+        if (Number(err?.status) === 401) {
+          logout("/admin-login");
         }
-      );
-      if (await handleUnauthorized(response)) return "";
-      const data = await parseApiResponse(response);
-      if (!response.ok) throw new Error(data.message || "Upload failed.");
-      return data.fileUrl;
-    } catch (err) {
-      setError(err?.message || "Upload failed.");
-      return "";
-    } finally {
-      setUploading(false);
-    }
-  };
+        throw err;
+      }
+    },
+    [logout, token]
+  );
+
+  const uploadImages = useCallback(
+    async (files) => {
+      const pickedFiles = Array.isArray(files) ? files.filter(Boolean) : [];
+      if (!pickedFiles.length) return;
+
+      setUploading(true);
+      setError("");
+      setMessage("");
+
+      const uploadedUrls = [];
+      const failedFiles = [];
+
+      try {
+        for (let index = 0; index < pickedFiles.length; index += 1) {
+          const file = pickedFiles[index];
+          try {
+            const url = await uploadImage(file);
+            if (url) {
+              uploadedUrls.push(url);
+              setContent((prev) => ({
+                ...prev,
+                gallery: {
+                  ...(prev.gallery || {}),
+                  images: [...(prev.gallery?.images || []), url],
+                },
+              }));
+            }
+          } catch (err) {
+            if (Number(err?.status) === 401) {
+              return;
+            }
+            failedFiles.push({
+              name: file?.name || `File ${index + 1}`,
+              message: err?.message || "Upload failed.",
+            });
+          }
+        }
+
+        if (uploadedUrls.length) {
+          setMessage(
+            `Uploaded ${uploadedUrls.length} image${uploadedUrls.length === 1 ? "" : "s"} successfully.`
+          );
+        }
+
+        if (failedFiles.length) {
+          const failureSummary = failedFiles
+            .slice(0, 3)
+            .map((item) => `${item.name}: ${item.message}`)
+            .join(" | ");
+          setError(
+            `Skipped ${failedFiles.length} image${failedFiles.length === 1 ? "" : "s"}. ${failureSummary}`
+          );
+        }
+      } finally {
+        setUploading(false);
+      }
+    },
+    [uploadImage]
+  );
 
   const saveGallery = async () => {
     setSaving(true);
@@ -291,23 +338,15 @@ export default function AdminGalleryManager() {
         <section className="rounded-2xl border border-[#FFD700]/25 bg-black/35 p-5">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <label className="px-4 py-2 border border-[#FFD700]/35 rounded-md text-sm text-[#FFD700] cursor-pointer hover:bg-[#FFD700] hover:text-black transition-all">
-              {uploading ? "Uploading..." : "Upload Image"}
+              {uploading ? "Uploading..." : "Upload Images"}
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={async (event) => {
-                  const file = event.target.files?.[0];
-                  const url = await uploadImage(file);
-                  if (url) {
-                    setContent((prev) => ({
-                      ...prev,
-                      gallery: {
-                        ...(prev.gallery || {}),
-                        images: [...(prev.gallery?.images || []), url],
-                      },
-                    }));
-                  }
+                  const files = Array.from(event.target.files || []);
+                  await uploadImages(files);
                   event.target.value = "";
                 }}
               />

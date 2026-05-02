@@ -1,4 +1,5 @@
 import { createDefaultSiteContent } from "../data/defaultSiteContent.js";
+import { normalizeCastBatchRecord } from "./castBatches.js";
 
 export const SITE_CONTENT_CACHE_KEY = "prasthanam_public_site_content";
 export const SITE_CONTENT_SNAPSHOT_ENDPOINT = "/api/site-content-snapshot";
@@ -18,6 +19,16 @@ const hashString = (value) => {
 const normalizeGovernorName = (value) => String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
 const blockedGovernorNames = new Set(["kolati yamini priya"]);
 const keepGovernorName = (value) => !blockedGovernorNames.has(normalizeGovernorName(value));
+
+const normalizeCastBatchForSite = (batch) => {
+  const normalizedBatch = normalizeCastBatchRecord(batch);
+  return {
+    ...normalizedBatch,
+    governorNames: Array.isArray(normalizedBatch.governorNames)
+      ? normalizedBatch.governorNames.map((name) => String(name || "").trim()).filter(keepGovernorName)
+      : [],
+  };
+};
 
 const getNavarasaTemplate = (fallbackNavarasas, incomingRasa, index) => {
   const id = String(incomingRasa?.id || "").trim();
@@ -77,24 +88,8 @@ export const mergeSiteContent = (incoming) => {
         : fallback.navarasas,
     castBatches:
       Array.isArray(incoming.castBatches) && incoming.castBatches.length
-        ? incoming.castBatches.map((batch) => {
-            const safeBatch = batch && typeof batch === "object" ? batch : {};
-            return {
-              ...safeBatch,
-              governorNames: Array.isArray(safeBatch.governorNames)
-                ? safeBatch.governorNames.map((name) => String(name || "").trim()).filter(keepGovernorName)
-                : [],
-            };
-          })
-        : fallback.castBatches.map((batch) => {
-            const safeBatch = batch && typeof batch === "object" ? batch : {};
-            return {
-              ...safeBatch,
-              governorNames: Array.isArray(safeBatch.governorNames)
-                ? safeBatch.governorNames.map((name) => String(name || "").trim()).filter(keepGovernorName)
-                : [],
-            };
-          }),
+        ? incoming.castBatches.map(normalizeCastBatchForSite)
+        : fallback.castBatches.map(normalizeCastBatchForSite),
     governors:
       Array.isArray(incoming.governors) && incoming.governors.length
         ? incoming.governors

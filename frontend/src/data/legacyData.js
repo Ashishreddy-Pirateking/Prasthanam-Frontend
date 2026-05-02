@@ -1,3 +1,5 @@
+import { buildCastBatchMetadata } from "../utils/castBatches.js";
+
 export const NAVARASAS = [
   {
     id: "shringara",
@@ -210,13 +212,11 @@ const GOVERNOR_NAMES_BY_BATCH = {
 };
 
 const createCastBatch = (id, members, extras = {}) => ({
-  id,
-  label: `Batch of ${id}`,
-  yearRange: `${Number(id) - 4} - ${id}`,
+  ...extras,
+  ...buildCastBatchMetadata(id),
   members,
   governorNames: GOVERNOR_NAMES_BY_BATCH[id] || [],
   photos: [],
-  ...extras,
 });
 
 export const CAST_BATCHES = [
